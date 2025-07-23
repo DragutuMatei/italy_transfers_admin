@@ -28,7 +28,6 @@ function Home() {
       price: book.masina.results.total,
       bags: book.masina.bags,
       operator_note: book.notes + ".",
-      service_note: book.code + ".",
       paxmail: book.email,
       pickup: book.origin.name,
       dropoff: book.destination.name,
@@ -40,9 +39,14 @@ function Home() {
       paxname: book.masina.name,
       paxphone: book.masina.phone,
     };
+    console.log({
+      decisition: resp,
+      data: send,
+      book_uid: uid,
+    });
     await toast_promise(
       AXIOS.post("/platform/update", {
-        decisition: true,
+        decisition: resp,
         data: send,
         book_uid: uid,
       })
@@ -83,11 +87,27 @@ function Home() {
     getRides();
   };
 
-  const filteredUsers = users.filter((user) =>
-    `${user.displayName} ${user.email}`
+  const filteredUsers = users.filter((user) => {
+    // Caută în nume/email
+    const userMatch = `${user.displayName} ${user.email}`
       .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
+      .includes(searchTerm.toLowerCase());
+    // Caută în serviceid-urile rezervărilor
+    const bookMatch = user.books.some((book_uid) => {
+      const book = books.find((b) => b.id === book_uid);
+      if (!book) return false;
+      return (
+        (book.serviceid &&
+          book.serviceid
+            .toString()
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())) ||
+        (book.id &&
+          book.id.toString().toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    });
+    return userMatch || bookMatch;
+  });
 
   return (
     <div className="admin-container">
