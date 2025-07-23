@@ -8,6 +8,24 @@ function Home() {
   const [users, setUsers] = useState([]);
   const [books, setBooks] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Debounce searchTerm
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (searchTerm !== debouncedSearch) {
+      setIsSearching(true);
+    } else {
+      setIsSearching(false);
+    }
+  }, [searchTerm, debouncedSearch]);
 
   const getRides = async () => {
     const rasp = await AXIOS.get("/api/getAllUsers");
@@ -91,7 +109,7 @@ function Home() {
     // Caută în nume/email
     const userMatch = `${user.displayName} ${user.email}`
       .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+      .includes(debouncedSearch.toLowerCase());
     // Caută în serviceid-urile rezervărilor
     const bookMatch = user.books.some((book_uid) => {
       const book = books.find((b) => b.id === book_uid);
@@ -101,17 +119,20 @@ function Home() {
           book.serviceid
             .toString()
             .toLowerCase()
-            .includes(searchTerm.toLowerCase())) ||
+            .includes(debouncedSearch.toLowerCase())) ||
         (book.id &&
-          book.id.toString().toLowerCase().includes(searchTerm.toLowerCase()))
+          book.id
+            .toString()
+            .toLowerCase()
+            .includes(debouncedSearch.toLowerCase()))
       );
     });
     return userMatch || bookMatch;
   });
 
-  // Dacă searchTerm se potrivește cu un serviceid, userul respectiv să fie primul
-  if (searchTerm.trim().length > 0) {
-    const lowerSearch = searchTerm.toLowerCase();
+  // Dacă debouncedSearch se potrivește cu un serviceid, userul respectiv să fie primul
+  if (debouncedSearch.trim().length > 0) {
+    const lowerSearch = debouncedSearch.toLowerCase();
     const matchIndex = filteredUsers.findIndex((user) =>
       user.books.some((book_uid) => {
         const book = books.find((b) => b.id === book_uid);
@@ -142,6 +163,17 @@ function Home() {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
         />
+        <span
+          style={{
+            marginLeft: 12,
+            color: isSearching ? "#888" : "transparent",
+            minWidth: 70,
+            display: "inline-block",
+            transition: "color 0.2s",
+          }}
+        >
+          Căutare...
+        </span>
       </div>
 
       {filteredUsers.map((user, index) => (
@@ -162,11 +194,32 @@ function Home() {
           </div>
 
           {user.books.map((book_uid, idx) => {
-            const book = books.find((b) => b.id === book_uid);
-            if (!book) return null;
+            const userBooks = user.books
+              .map((book_uid) => books.find((b) => b.id === book_uid))
+              .filter(Boolean);
 
-            return (
-              <div className="booking-card" key={idx}>
+            // Dacă există searchTerm și se potrivește cu un service id/id, mută acel booking primul
+            let sortedBooks = userBooks;
+            if (debouncedSearch.trim().length > 0) {
+              const lowerSearch = debouncedSearch.toLowerCase();
+              const matchIndex = userBooks.findIndex(
+                (book) =>
+                  (book.serviceid &&
+                    book.serviceid
+                      .toString()
+                      .toLowerCase()
+                      .includes(lowerSearch)) ||
+                  (book.id &&
+                    book.id.toString().toLowerCase().includes(lowerSearch))
+              );
+              if (matchIndex > 0) {
+                const [matchBook] = sortedBooks.splice(matchIndex, 1);
+                sortedBooks = [matchBook, ...sortedBooks];
+              }
+            }
+
+            return sortedBooks.map((book, idx) => (
+              <div className="booking-card" key={book.id || idx}>
                 <h2
                   className="booking-id"
                   style={{ cursor: "pointer" }}
@@ -268,7 +321,7 @@ function Home() {
                   )}
                 </div>
               </div>
-            );
+            ));
           })}
         </div>
       ))}

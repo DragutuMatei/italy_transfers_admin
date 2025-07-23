@@ -4,13 +4,13 @@ const options = {
   closeOnClick: true,
   theme: "colored",
 };
-const toast_promise = async (fct) => {
+const toast_promise = async (fct, succ, fail) => {
   return await toast.promise(
     fct,
     {
       pending: "Se incarca!",
-      error: "A aparut o eroare",
-      success: "Mesaj transmis cu success!",
+      error: fail || "A aparut o eroare",
+      success: succ || "Mesaj transmis cu success!",
     },
     options
   );
