@@ -87,7 +87,7 @@ function Home() {
     getRides();
   };
 
-  const filteredUsers = users.filter((user) => {
+  let filteredUsers = users.filter((user) => {
     // Caută în nume/email
     const userMatch = `${user.displayName} ${user.email}`
       .toLowerCase()
@@ -109,6 +109,27 @@ function Home() {
     return userMatch || bookMatch;
   });
 
+  // Dacă searchTerm se potrivește cu un serviceid, userul respectiv să fie primul
+  if (searchTerm.trim().length > 0) {
+    const lowerSearch = searchTerm.toLowerCase();
+    const matchIndex = filteredUsers.findIndex((user) =>
+      user.books.some((book_uid) => {
+        const book = books.find((b) => b.id === book_uid);
+        if (!book) return false;
+        return (
+          (book.serviceid &&
+            book.serviceid.toString().toLowerCase().includes(lowerSearch)) ||
+          (book.id && book.id.toString().toLowerCase().includes(lowerSearch))
+        );
+      })
+    );
+    if (matchIndex > 0) {
+      // Mută userul găsit pe prima poziție
+      const [matchUser] = filteredUsers.splice(matchIndex, 1);
+      filteredUsers = [matchUser, ...filteredUsers];
+    }
+  }
+
   return (
     <div className="admin-container">
       <h1 className="admin-title">Admin Panel</h1>
@@ -116,7 +137,7 @@ function Home() {
       <div className="search-container">
         <input
           type="text"
-          placeholder="Caută utilizator după nume sau email..."
+          placeholder="Caută utilizator după nume, email sau service id..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
@@ -129,7 +150,14 @@ function Home() {
             <img src={user.photoURL} alt={user.displayName} />
             <ul>
               <li className="user-name">{user.displayName}</li>
-              <li className="user-email">{user.email}</li>
+              <li className="user-email">
+                <a
+                  href={`mailto:${user.email}`}
+                  style={{ color: "inherit", textDecoration: "underline" }}
+                >
+                  {user.email}
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -139,7 +167,24 @@ function Home() {
 
             return (
               <div className="booking-card" key={idx}>
-                <h2 className="booking-id">
+                <h2
+                  className="booking-id"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    const idToCopy = book.serviceid ? book.serviceid : book.id;
+                    navigator.clipboard.writeText(idToCopy);
+                    if (window.toast) {
+                      window.toast("Service ID copiat în clipboard!");
+                    } else if (typeof toast_promise === "function") {
+                      toast_promise(
+                        Promise.resolve(),
+                        "Service ID copiat în clipboard!"
+                      );
+                    } else {
+                      alert("Service ID copiat în clipboard!");
+                    }
+                  }}
+                >
                   Booking ID: {book.serviceid ? book.serviceid : book.id}
                 </h2>
 
