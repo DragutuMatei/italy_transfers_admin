@@ -38,7 +38,7 @@ function Testimonials() {
                 {testimonial.img && <img src={testimonial.img} alt="" width={100} height={100} />}{" "}
                 <h3 className="testimonial-name">{testimonial.name}</h3>
                 <h4 className="testimonial-job">{testimonial.profesie}</h4>
-                <h4 className="testimonial-job">{testimonial.rating}/5</h4>
+                <h4 className="testimonial-job">{testimonial.rating}/5 stele</h4>
                 <p className="testimonial-message">{testimonial.mesaj}</p>
                 <h5 className="testimonial-date">
                   {new Date(testimonial.timestamp).toLocaleString()}
