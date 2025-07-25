@@ -105,6 +105,11 @@ function Home() {
     getRides();
   };
 
+  const unsubscribeNewsletter = async (email) => {
+    await toast_promise(AXIOS.delete("/api/newsletter", { data: { email } }));
+    getRides();
+  };
+
   let filteredUsers = users.filter((user) => {
     // Caută în nume/email
     const userMatch = `${user.displayName} ${user.email}`
@@ -191,6 +196,23 @@ function Home() {
                 </a>
               </li>
             </ul>
+            {user.hasnews && (
+              <button
+                className="btn unsubscribe"
+                style={{
+                  marginTop: 8,
+                  background: "#ff4c00",
+                  color: "#fff",
+                  borderRadius: 6,
+                  padding: "6px 16px",
+                  border: "none",
+                  fontWeight: 600,
+                }}
+                onClick={() => unsubscribeNewsletter(user.email)}
+              >
+                Dezabonează newsletter
+              </button>
+            )}
           </div>
 
           {user.books.map((book_uid, idx) => {
