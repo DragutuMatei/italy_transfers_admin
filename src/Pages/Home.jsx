@@ -45,7 +45,11 @@ function Home() {
       cartype: book.masina.type,
       price: book.masina.results.total,
       bags: book.masina.bags,
-      operator_note: book.notes + ".",
+      operator_note:
+        book.notes +
+        (book.specialPickupNumber
+          ? ` Special pickup: ${book.specialPickupNumber}.`
+          : "."),
       paxmail: book.email,
       pickup: book.origin.name,
       dropoff: book.destination.name,
@@ -297,6 +301,12 @@ function Home() {
                   <p>
                     <strong>Telefon:</strong> {book.phone}
                   </p>
+                  {book.isSpecialPickup && book.specialPickupNumber && (
+                    <p>
+                      <strong>Flight/train/ship number:</strong>{" "}
+                      {book.specialPickupNumber}
+                    </p>
+                  )}
                 </div>
 
                 {book.pay && (
